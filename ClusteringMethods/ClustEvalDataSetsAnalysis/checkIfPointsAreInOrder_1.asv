@@ -1,0 +1,43 @@
+
+
+
+sizedata = size(data,1);
+
+numbCluster = 15;
+
+groundTruth = zeros(length(data),1);
+
+chunk = floor(sizedata/numbCluster);
+
+starts = 1 : chunk : sizedata;
+
+if length(starts) > numbCluster
+    
+    starts(numbCluster+1:end) = [];
+end
+
+
+ends = starts + 1;
+
+ends(1) = [];
+ends(numbCluster) = sizedata;
+
+
+col = jet(numbCluster);
+
+for n = 1 : lenght(starts)
+    
+    indThisCluster = starts : 1 : ends(n);
+    
+    plot(data(indThisCluster,1),data(indThisCluster,2),'.', col(n,:))
+    
+    hold on
+    axis square
+    box off
+    
+end
+
+
+
+
+

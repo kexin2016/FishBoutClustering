@@ -1,0 +1,339 @@
+clear all
+close all
+
+
+%%
+%%%%%%%%%%%%%%%%%%%%%pick Bout fish map%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%pick main folder where data set subfolders and fishMap are
+% dataPath =  uigetdir;
+
+
+dataPath = 'F:\Joao\data\boutFiles\boutFilesFinal\';
+%get fishStimMap name and path
+DataFiles = dir(dataPath);
+
+%determine wich are folder
+isFolderVector = [DataFiles(:).isdir];
+
+%fins fishMap
+nameFishMap = DataFiles(find(isFolderVector == 0)).name;
+
+
+%make file of fish map
+pathFishName = strcat(dataPath, '\',nameFishMap);
+
+%load fish map
+load(pathFishName)
+
+
+
+%%
+%%%%%%%%%%%%%%% load bout map %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+PathName = 'F:\Joao\FreelyMovingBehaviorAnalysis_14\assignBoutTypesUsingMap\BoutMap\';
+FileName = 'BoutMapCenters_kNN4_74Kins4dims_1.75Smooth_slow_3000_auto_4roc_withChasingDots.mat';
+
+
+% load(strcat(PathName,FileName))
+load(strcat(PathName,FileName))
+
+
+%%
+%%%%%%%%%%%%%%%%%%%% get stuff out of orginal clustering %%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+indsBoutMapInAllData = finalClustering.indsBoutMapInAllData;
+boutMapCat = finalClustering.clusterAssignmentInMap;
+newAssignmentInAllData = finalClustering.newAssignmentInAllData;
+col = finalClustering.col;
+idx = finalClustering.idx;
+
+boutUniqueNumber = finalClustering.boutUniqueNumberInAllData;
+
+%boutUniqueNumber = BoutInf(:,EnumeratorBoutInf.boutUniqueNumber);
+boutUniqueNumberMap = finalClustering.boutUniqueNumbersUsedInMap;
+boutDataPCASampleMap = finalClustering.dataToDoMap;
+
+
+
+% BoutInfMap = BoutInf(indsBoutMapInAllData,:);
+% BoutKinematicParametersMap = BoutKinematicParameters(indsBoutMapInAllData,:);
+
+
+
+clearvars -except BoutInfMap BoutKinematicParametersMap boutDataPCASampleMap behavioralSpaceStructure finalClustering col idx boutUniqueNumberMap...
+    allBoutStructure fishMap newAssignmentInAllData indsBoutMapInAllData
+
+
+
+
+
+%%
+%%%%%%%%%%%%%%%%%pick data set%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+dataSetNumber = BoutInfMap(:,EnumeratorBoutInf.dataSetNumber);
+% boutCatInMap = BoutInfMap(:,EnumeratorBoutInf.boutCat);
+boutCatInMap = newAssignmentInAllData(indsBoutMapInAllData);
+boutCatInMap = boutCatInMap';
+
+uniqueDataSetNumber = unique(dataSetNumber);
+
+indDataSet = [];
+for n = 1 : length(uniqueDataSetNumber)
+    
+indDataSet1 = find([fishMap.dataSetNumber] == uniqueDataSetNumber(n));
+indDataSet = [indDataSet indDataSet1];
+    
+end
+
+length(indDataSet)
+% pause
+
+%%
+%%%%%%%%%%%%%%%%% loop through files %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+FishDataMap = [];          
+indBoutStartAllDataInFinalArray = 0;
+indBoutEndAllDataInFinalArray = 0;
+
+indBeatStartAllDataInFinalArray = 0;
+indBeatEndAllDataInFinalArray = 0;
+
+
+boutCatFinalArray = [];     
+BoutInfFinalArray = [];     
+BoutKinematicParametersFinalArray = [];     
+
+bouSpace = 20;
+
+counter =1;
+counterBeat = 1;
+% allArrayLength = 0;
+
+BeatKinematicParametersFinalArray = [];
+BeatInfFinalArray = [];
+BoutCatInHalfBeatFinalArray = [];
+
+for n = 1 : length(fishMap(indDataSet))%file loop
+   n 
+%      n = 1
+%     
+    %%
+    %%%%%%%%%%%%%%load fish file%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    pathSelectedFish = fishMap(indDataSet(n)).fishPath;
+    load(pathSelectedFish)
+    
+     for nnn = 1 : length(allBoutStructure)%loop through each fish
+       
+   %get bout variables
+   BoutInf = allBoutStructure(nnn).BoutInf;
+   BoutKinematicParameters = allBoutStructure(nnn).BoutKinematicParameters;
+   FishData = allBoutStructure(nnn).FishData;
+   
+   BeatKinematicParameters = allBoutStructure(nnn).BeatKinematicParameters;
+   BeatInf = allBoutStructure(nnn).BeatInf;
+   boutUniqueNumberInHalfBeats = BeatInf(:,EnumeratorBeatInf.boutUniqueNumber);
+   
+
+   boutUniqueNumberThisFish = BoutInf(:,EnumeratorBoutInf.boutUniqueNumber);
+   
+  [mapBoutUniqueNumberThisFish,indsA,indsB] = intersect(boutUniqueNumberThisFish,boutUniqueNumberMap);
+  
+   filteredDistanceThisFish = FishData(:,EnumeratorFishData.filteredDistance);
+
+  
+    
+  if ~isempty(indsA)
+      
+    %get start and end of bouts
+    indBoutStartAllData = BoutInf(indsA,EnumeratorBoutInf.indBoutStartAllData);
+    indBoutEndAllData = BoutInf(indsA,EnumeratorBoutInf.indBoutEndAllData);
+    
+
+   
+    
+   
+    
+    %%
+%     boutCatThisFish = BoutInf(indsA,EnumeratorBoutInf.boutCat);%bout cat in bout files
+
+    boutCatThisFish = boutCatInMap(indsB);%boutcat in map
+
+    
+    BoutInfThisFish = BoutInf(indsA,:);
+    BoutKinematicParametersThisFish = BoutKinematicParameters(indsA,:);
+    
+    
+   
+      for nn = 1 : length(indBoutStartAllData)%loop through each bout 
+          
+          
+    %%
+    %%%%%%%%%%%%% calculate end of bout by min distance %%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %get start ind of next bout
+    endThresh = 0.025;
+
+    if indsA(nn) <  size(BoutInf,1)%case that there is no next bout
+    indBoutStartAllDataNext = BoutInf((indsA(nn)+1),EnumeratorBoutInf.indBoutStartAllData);
+    
+    interboutregion = filteredDistanceThisFish(indBoutEndAllData(nn):indBoutStartAllDataNext-1);
+    else
+          interboutregion = filteredDistanceThisFish(indBoutEndAllData(nn):(end-1));
+  
+    end
+    
+    
+    [Y,I] = min(interboutregion);
+    I2=find(interboutregion<endThresh,1,'first');
+    
+    if (~isempty(I2))
+        
+           indRealEnds = indBoutEndAllData(nn)+min(I,I2)-1;
+    else
+           indRealEnds = indBoutEndAllData(nn) + I-1;
+       
+    end
+          
+          
+          %%
+          %%%%%%%%%%%%% get half beats of this bout %%%%%%%%%%%%%%%%%%%%%%%
+          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          
+          indHalfBeatsThisBout = find(boutUniqueNumberInHalfBeats == mapBoutUniqueNumberThisFish(nn));
+          
+          BeatKinematicParametersThisBout = BeatKinematicParameters(indHalfBeatsThisBout,:);
+          BeatInfThisBout = BeatInf(indHalfBeatsThisBout,:);
+          
+          %control for length
+          if size(BeatInfThisBout,2) < EnumeratorBeatInf.beatCat
+    
+    
+            zeroVector = zeros(size(BeatInfThisBout,1),1);
+            numbInt= EnumeratorBeatInf.beatCat - size(BeatInfThisBout,2);
+   
+   
+            for g = 1 : numbInt
+       
+            BeatInfThisBout = [BeatInfThisBout zeroVector];
+       
+            end
+   
+    
+    
+          end
+          
+          
+          %get ind of half beats from start of bout
+%           indBeatStartInBout = BeatInfThisBout(:,EnumeratorBeatInf.indBeatStartInBout);
+%           indBeatEndInBout = BeatInfThisBout(:,EnumeratorBeatInf.indBeatEndInBout);    
+          indBeatStartInBout = BeatInfThisBout(:,EnumeratorBeatInf.indBeatStartAllData);
+          indBeatEndInBout = BeatInfThisBout(:,EnumeratorBeatInf.indBeatEndAllData);    
+          
+
+          BeatKinematicParametersFinalArray = [BeatKinematicParametersFinalArray' BeatKinematicParametersThisBout']';
+          BeatInfFinalArray = [BeatInfFinalArray' BeatInfThisBout']';
+          
+          BoutCatInHalfBeatArrayThisBout = zeros(length(indHalfBeatsThisBout),1) + boutCatThisFish(nn);
+          
+          BoutCatInHalfBeatFinalArray = [BoutCatInHalfBeatFinalArray' BoutCatInHalfBeatArrayThisBout']';
+          
+          %%
+          %%%%%%%%%%%%%%% get raw data in map %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          
+          %avoid being out of data
+          if indBoutStartAllData(nn)- bouSpace < 1 || indRealEnds + bouSpace > size(FishData,1)
+             
+              bouSpace1 = 0;
+              
+          else
+              
+              bouSpace1 = bouSpace;
+              
+          end
+          
+          indBoutStartAllDataWithSpace = indBoutStartAllData(nn) - bouSpace1;
+          indBoutEndAllDataWithSpace = indRealEnds + bouSpace1;
+          
+          
+          indBeatStartInBoutWithSpace =  indBeatStartInBout - (indBoutStartAllData(nn) - bouSpace1);
+          indBeatEndInBoutWithSpace =  indBeatEndInBout - (indBoutStartAllData(nn) - bouSpace);
+          
+%           indBeatStartInBoutWithSpace = indBeatStartInBout;
+%           indBeatEndInBoutWithSpace = indBeatEndInBout;
+          
+          FishDataThisBout = FishData(indBoutStartAllDataWithSpace:indBoutEndAllDataWithSpace,:);
+          FishDataMap = [FishDataMap' FishDataThisBout']';
+          
+         %save inds of bout in raw data that is being concatenated 
+         indBoutStartAllDataInFinalArray(counter) = size(FishDataMap,1) - (indBoutEndAllDataWithSpace - indBoutStartAllDataWithSpace);
+         indBoutEndAllDataInFinalArray(counter) = size(FishDataMap,1);
+         indBoutEndAllDataInFinalArrayByTail(counter) = size(FishDataMap,1) - (indRealEnds - indBoutEndAllData(nn));
+
+
+         %save inds of beats in raw data that is being concatenated 
+         for t = 1 : length(indBeatStartInBoutWithSpace)
+         
+         indBeatStartAllDataInFinalArray(counterBeat) =  indBoutStartAllDataInFinalArray(counter) + indBeatStartInBoutWithSpace(t);
+         indBeatEndAllDataInFinalArray(counterBeat) =  indBoutStartAllDataInFinalArray(counter) + indBeatEndInBoutWithSpace(t);
+         
+         
+         counterBeat = counterBeat +1;
+         end
+         counter = counter +1;
+
+      end
+      
+      BoutInfFinalArray = [BoutInfFinalArray' BoutInfThisFish']';
+      BoutKinematicParametersFinalArray = [BoutKinematicParametersFinalArray' BoutKinematicParametersThisFish']';
+      boutCatFinalArray = [boutCatFinalArray' boutCatThisFish']';
+
+      
+%       if counter ~=1
+%           allArrayLength = allArrayLength + size(FishDataMap,1);
+%       end
+%     
+      
+%       
+%       boutCatThisBouts = BoutInf(indsA,EnumeratorBoutInf.boutCat);
+%       
+%       
+%       BoutCatFishMapNew = [BoutCatFishMapNew' boutCatThisBouts']';
+      
+      
+  end
+
+     end
+    
+end
+
+
+
+
+%%
+%%%%%%%%%%%%%%%%% save bout map all %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% finalClustering.idx = idx;
+finalClustering.col = col;
+
+BeatKinematicParametersOfMapAll = [];
+BeatInfOfMapAll = [];
+BoutCatInHalfbeatArray = [];
+
+
+PathName = 'F:\Joao\data\';
+FileName = 'BoutMapCentersWithRaw_kNN4_74Kins4dims_1.75Smooth_slow_3000_auto_4roc_withChasingDots.mat';
+
+save(strcat(PathName,FileName),...
+    'behavioralSpaceStructure','finalClustering','FishDataMap','indBoutStartAllDataInFinalArray','indBoutEndAllDataInFinalArray',...
+    'indBoutEndAllDataInFinalArrayByTail','indBeatStartAllDataInFinalArray','indBeatEndAllDataInFinalArray',...
+    'boutCatFinalArray','BoutInfFinalArray','BoutKinematicParametersFinalArray','BeatKinematicParametersFinalArray',...
+    'BeatInfFinalArray','BoutCatInHalfBeatFinalArray','-v7.3')
+
+

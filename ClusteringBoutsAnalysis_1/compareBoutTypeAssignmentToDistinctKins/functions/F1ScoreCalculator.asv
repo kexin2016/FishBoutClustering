@@ -1,0 +1,52 @@
+
+
+
+boutCatGoodNewSpace
+boutCatGood
+
+%%
+%%%%%%%%%%%%% count TP, FP,FN %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% CP = classperf(boutCatGood, boutCatGoodNewSpace);
+% 
+% CountingMatrix = CP.CountingMatrix;
+% % TP = CP.CorrectRate;
+% DiagnosticTable = CP.DiagnosticTable;
+
+stats = confusionmatStats(boutCatGood',boutCatGoodNewSpace');
+% numbAll = 0;
+% for ii = 1 : 11
+%     numb = CountingMatrix(ii,ii);
+%     numbAll = numbAll + numb;
+%     
+% end
+% [tpr,fpr,thresholds] = roc(boutCatGood, boutCatGoodNewSpace);
+% 
+% [~,~,~,per] = confusion(boutCatGood,boutCatGoodNewSpace)
+% CP = classperf(boutCatGood, boutCatGoodNewSpace)
+% boutCatGood
+
+%%
+%%%%%%%%%%%%%%% calcualte precision %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+precision = TP./(TP + FP);
+
+%%
+%%%%%%%%%%%%%%% calcualte recall %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+recall = TP./(TP + FN);
+
+%%
+%%%%%%%%%%%%%%%% calcualte F1 score %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+F1_Score = 2*(precision*recall)/(precision + recall);
+
+F2_Score = 5*(precision*recall)/(5*precision + recall);
+
+
+
+G = sqrt(precision*recall);

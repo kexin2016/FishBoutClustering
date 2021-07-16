@@ -1,0 +1,127 @@
+
+
+
+clear all
+close all
+
+
+AddFunctionToPath
+
+%get folder name where the folders with each dataset are
+dataPath =  uigetdir;
+
+
+%%
+%%%%%%%%%%%%%%%%%%get names of all files of all data sets%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%test function
+
+
+%creats structure with names of things inside folder
+DataFiles = dir(dataPath);
+
+DataFiles(1) = [];
+DataFiles(1) = [];
+DataFiles(1) = [];%erase first file 
+
+
+%%
+%%%%%%%%%%%%%%%%%% make threshold matrix %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+thresholdMatrix = zeros(7,20);
+
+thresholdMatrix(1,:) = [];
+thresholdMatrix(2,:) = [];
+thresholdMatrix(3,:) = [];
+thresholdMatrix(4,:) = [];
+thresholdMatrix(5,:) = [];
+thresholdMatrix(6,:) = [];
+thresholdMatrix(7,:) = [];
+
+
+
+%%
+%%%%%%%%%%%%%%%% assign all data according to dendrogram cut off %%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+% for nn = 1 : length(DataFiles)
+% n = 7
+
+nn = 1
+
+%%
+%%%%%%%%%%%%%%%%%% load this data set %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+clearvars -except DataFiles dataPath nn indGoodBouts 
+   load(char(strcat(dataPath, '\', DataFiles(4).name)),'groupClusterSctructure','boutDataPCASample','clusterStructure','BoutInf','behavioralSpaceStructure','indStructure','-mat');%!!! it should break in uni fish debug
+   
+   
+ %%
+%%%%%%%%%%%% determine number of dims of data set %%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+bandWidthsScalled2 = indStructure(1).bandWidthsScalled;
+
+ numbOfDims =  size(bandWidthsScalled2,1);
+%  numbOfDims =  3;
+  
+   clearvars indStructure
+%%
+%%%%%%%%%%%%% exclude broken bouts %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+TF = exist('indGoodBouts','var');
+
+if TF == 0
+    
+pickFirstBout = 0;
+edgeLim = 50;
+
+[exclusionBoutStructure,indBadBouts,indBoutsForPCA] = boutExcluder_1(BoutInf,pickFirstBout,edgeLim);
+
+mistakesIn74KinSpace = BoutInf(:,EnumeratorBoutInf.mistakesIn74KinSpace);
+indMistakesIn74KinSpace = find(mistakesIn74KinSpace);
+
+indBoutsToExclude = [indBadBouts' indMistakesIn74KinSpace']';
+indGoodBouts = 1 : length(BoutInf);
+indGoodBouts(indBoutsToExclude) = [];
+
+end
+
+%%
+%%%%%%%%%%%%%%%% get stuff I need from structures %%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   
+essembleMatrix = groupClusterSctructure.essembleMatrix;
+groupClusterSctructureThis = groupClusterSctructure.distributions;
+
+
+   
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% apply this threshold %%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+   makeplot = 1;
+   numbDist = 1;
+   cutThresholdThis = 10;
+   
+   [T2,Z2,essembleMatrixPerm,clusterStructure] = essemble_tSne_plot_4(essembleMatrix,boutDataPCASample,clusterStructure,groupClusterSctructureThis,cutThresholdThis,numbDist,makeplot);
+
+   % unique([clusterStructure.ClusterOfClusterCat])
+clusterAssignmentGroupClusters = T2;
+
+   
+   
+%%
+%%%%%%%%%%%%%%%%%%%%% do assignment to all data %%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ makeplot = 0;
+ 
+[clusterAssignmentThis] = finalClustering_KnearestNeighbour_fromEssembleTSNE_function_1(boutDataPCASample,clusterStructure,clusterAssignmentGroupClusters,indGoodBouts,numbOfDims,makeplot);
+
+
+

@@ -1,0 +1,69 @@
+
+
+%%
+%%%%%%%%%%%%%%%%%%%%try function %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+boutMapPath = 'C:\Joao analysis\BehaviorDataAnalysis_151022\FreelyMovingBehaviorAnalysis_4\assignBoutTypesUsingMap\BoutMap\BoutMap_AllDataWithLightTransitionsNoIndPrey_74Kins3dims_1.75Smooth_slow_100thres_tsne3_kNeighbor4.mat';
+
+load(boutMapPath)
+
+BoutInfThisBout
+BoutKinematicParametersThisBout
+finalClustering
+
+%%
+%%%%%%%%%%%%%% get stuff out of structures %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%get vars out of structure
+meanAllVar = behavioralSpaceStructure.meanAllVar;
+stdAllVar = behavioralSpaceStructure.stdAllVar;
+COEFF = behavioralSpaceStructure.COEFF;
+latent = behavioralSpaceStructure.latent;
+maxKinPars = behavioralSpaceStructure.maxKinPars;
+indKinPars = behavioralSpaceStructure.indKinPars;
+meanPCASpace = behavioralSpaceStructure.meanPCASpace;
+
+
+% method = finalClustering.method;
+numbOfK = finalClustering.numbOfK;
+finalData = finalClustering.dataToDoMap;
+distanceMethod = finalClustering.distanceMethod;
+% indsBoutMapInAllData = finalClustering.indsBoutMapInAllData;
+mapAssignment = finalClustering.assignment;
+
+%%
+%%%%%%%%%%%% put bout in PCA space %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+[boutDataPCASample] = placeDataIntoFixedBehavioralSpace_1(BoutKinematicParametersThisBout,indKinPars,maxKinPars,meanAllVar,stdAllVar,meanPCASpace,COEFF);
+
+boutDataPCASample = boutDataPCASample(:,1:3);
+
+%%
+%%%%%%%%%%%%%% cat new data by k neightbour %%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% numbOfK = 50;
+% distanceMethod = 'euclidean';
+tic
+ [IDX,D] = knnsearch(finalData,boutDataPCASample,'k',numbOfK,'Distance',distanceMethod);
+toc
+
+% [IDX,D] = knnsearch(finalData,finalData,'k',numbOfK,'Distance',distanceMethod);
+
+%find lables
+
+
+knnLabels = mapAssignment(IDX);
+
+%assing points by the most frequent label
+ clusterAssignmentAllData = mode(knnLabels');
+% dataAssign = knnLabels;
+
+%%
+%%%%%%%%%%%%%%%% update BoutInf array %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+

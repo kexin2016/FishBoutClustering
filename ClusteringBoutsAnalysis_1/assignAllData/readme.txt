@@ -1,0 +1,1 @@
+this folder is about assign bouts using groupClusterStructure

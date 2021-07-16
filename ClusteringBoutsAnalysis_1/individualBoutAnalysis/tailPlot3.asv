@@ -1,0 +1,42 @@
+
+
+AddFunctionToPath
+clear all 
+
+close all
+
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%% load tail data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% [FileName,PathName,~] = uigetfile;
+% pathFishName = strcat(PathName,FileName);
+
+% load(pathFishName)
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%% load tail data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+folder = 'C:\Joao analysis\FreeData\clusteringData\boutMap\finalMerged11\';
+filename = 'BoutMapWithRawCenters_kNN4_74Kins4dims_1.75Smooth_slow_3000_auto_4roc_merged11.mat';
+
+load(strcat(folder,filename));
+
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%% cat bouts manually %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+stimNumber = BoutInfFinalArray(:,EnumeratorBoutInf.stimNumber);
+numberOfBoutInStim  = BoutInfFinalArray(:,EnumeratorBoutInf.numberOfBoutInStim);
+dataSetNumber = BoutInfFinalArray(:,EnumeratorBoutInf.dataSetNumber);
+previousStimNumber = BoutInfFinalArray(: ,EnumeratorBoutInf.previousStimNumber);
+
+
+boutMaxAngularSpeedAll = BoutKinematicParametersFinalArray(:,EnumeratorBoutUsedKinPar.boutMaxAngularSpeed);
+meanTailChangeMaxAll  = BoutKinematicParametersFinalArray(:,EnumeratorBoutUsedKinPar.meanTailChangeMax);
+boutAmplitude7MaxAll  = BoutKinematicParametersFinalArray(:,EnumeratorBoutUsedKinPar.boutAmplitude7Max);
+
+
+%%
+idx = finalClustering.idx;
+
+indThisBoutType = 4;

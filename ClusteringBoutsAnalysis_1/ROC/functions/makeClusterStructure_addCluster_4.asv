@@ -1,0 +1,380 @@
+% function [clusterStructure] = makeClusterStructure_addCluster_4(indStructure,boutDataPCASample,minNumbClusterPoints,percClusterThres,corePerc,indToAddAllClusters,indExcludeClusters,boutDataPCASampleData,makeplot) 
+
+
+%%
+%%%%%%%%%%%%%%%% things to go inside function %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%%%%%%%%%%%% determine number of dims of data set %%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+bandWidthsScalled2 = indStructure(1).bandWidthsScalled;
+
+numbOfDims =  size(bandWidthsScalled2,1);
+%  numbOfDims =  3;
+
+
+
+
+%%
+%%%%%%%%%%%%%%%%% fix this ind rand %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+for u = 1 : length(indStructure)
+    
+%     u =78
+   thisIndRand =  indStructure(u).thisIndRand;
+    
+    if size(thisIndRand,2) > 1
+        
+        thisIndRand = thisIndRand';
+        
+    end
+    
+     indStructure(u).thisIndRand = thisIndRand;
+    
+end
+
+
+%%
+%%%%%%%%%%%%calculate percentage of each cluster in data set %%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+for n = 1 : length(indStructure)%loop through each data set
+    
+   thisIndRand = indStructure(n).thisIndRand;
+    thisInds = indStructure(n).thisInds;
+    
+    funnymeasure = indStructure(n).funnymeasure;
+    realRho = indStructure(n).realRho;
+    indChoosenClusterCenters = indStructure(n).indChoosenClusterCenters;
+    clusterAssignment =  indStructure(n).clusterAssignment;
+    rho = indStructure(n).rho;
+    maxjump = indStructure(n).maxjump;
+
+    dataThisDataSetRand = boutDataPCASample(thisIndRand, 1:numbOfDims);
+
+    uniqueClusterAssignment = unique(clusterAssignment);
+    
+    
+    %%
+    %%%%%%%%%%%%%%%% loop through each cluster %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    percentageOfClusters = zeros(1,length(indChoosenClusterCenters));
+    numbOfClusters = zeros(1,length(indChoosenClusterCenters));
+    
+      for nn = 1 : length(indChoosenClusterCenters)
+          
+          
+        indThisCluster = find(clusterAssignment == uniqueClusterAssignment(nn)); 
+        
+        percentageOfClusters(nn) = length(indThisCluster)./length(thisIndRand);
+        numbOfClusters(nn) = length(indThisCluster);
+          
+      end
+
+    
+    
+%%
+%%%%%%%%%%%% save cluster centers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+indStructure(n).percentageOfClusters = percentageOfClusters;
+indStructure(n).numbOfClusters = numbOfClusters;
+
+
+
+
+end
+
+
+
+%%
+%%%%%%%%%% make structure with clusters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+clusterStructure = [];
+counter = 1;
+clusterSizes = [];
+percentageOfClustersAll = [];
+
+for nn = 2 : length(indStructure)
+    counter
+    
+%     nn =78
+    clusterAssignment = indStructure(nn).clusterAssignment;
+    indChoosenClusterCenters = indStructure(nn).indChoosenClusterCenters;
+    thisIndRand = indStructure(nn).thisIndRand;
+    
+    percentageOfClusters = indStructure(nn).percentageOfClusters;
+    numbOfClusters = indStructure(nn).numbOfClusters;
+    
+%     realRho = indStructure(nn).realRho;
+    uniqueClusterAssignment = unique(clusterAssignment);
+    
+    for n  = 1 : length(uniqueClusterAssignment)
+%         n =1
+        indThisCluster = find(clusterAssignment == uniqueClusterAssignment(n));
+        
+        
+        thisClusterOriginalInds = thisIndRand(indThisCluster);
+        indChoosenClusterCentersOrigianlInds = thisIndRand(indChoosenClusterCenters(n));
+        
+        
+        
+        %%
+        %%%%%%%%%% calculate cluster core by densities %%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        if length(thisClusterOriginalInds) > 2%avoid cluster with 1 point
+       densityType = 'rot';
+       
+       tic
+       kdedensThisCluster = kde( boutDataPCASample(thisClusterOriginalInds,1:numbOfDims)',densityType);
+       
+       densitiesThisCluster = evaluate(kdedensThisCluster,boutDataPCASample(thisClusterOriginalInds,1:numbOfDims)');
+       toc
+       percentile = prctile(densitiesThisCluster,15);%15 works fine
+    
+       indsCore = find(densitiesThisCluster > percentile);
+       
+       indsCore2 = thisClusterOriginalInds(indsCore);
+       
+       else
+    
+       indsCore2 = thisClusterOriginalInds;
+        end
+       
+        
+        
+%     figure
+%         plot3(boutDataPCASample(thisClusterOriginalInds,1),boutDataPCASample(thisClusterOriginalInds,2),boutDataPCASample(thisClusterOriginalInds,3), '.k')
+%         hold on   
+%          plot3(boutDataPCASample(indsCore2,1),boutDataPCASample(indsCore2,2),boutDataPCASample(indsCore2,3), '.r')
+% %         plot3(boutDataPCASample(thisClusterOriginalInds(indsCore),1),boutDataPCASample(thisClusterOriginalInds(indsCore),2),boutDataPCASample(thisClusterOriginalInds(indsCore),3), '.r')
+% 
+%         
+        
+        
+        %%
+        %%%%%%%%%%% save data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        clusterStructure(counter).thisClusterOriginalInds = thisClusterOriginalInds;
+        clusterStructure(counter).indsCore = indsCore2;
+        clusterStructure(counter).indChoosenClusterCentersOrigianlInds =  indChoosenClusterCentersOrigianlInds;
+         
+        clusterSizes(counter) = numbOfClusters(n);
+        
+        percentageOfClustersAll(counter) = percentageOfClusters(n);
+        
+        
+        
+        clusterCoreSizes(counter) = length(indsCore);
+        clusterStructure(counter).bigDataSetNumber = nn;
+        clusterStructure(counter).ClusterOfClusterCat =  0;
+        counter = counter + 1;
+
+    end
+    
+    
+    
+end
+
+figure
+subplot(1,2,1)
+plot(sort(clusterSizes,'descend'), '.')
+hold on
+plot(sort(clusterCoreSizes,'descend'), 'r.')
+axis square
+
+subplot(1,2,2)
+plot(sort(percentageOfClustersAll,'descend'), '.')
+axis square
+
+% pause
+
+
+%%
+%%%%%%%%%%%%% look at clusters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+thisClusterOriginalIndsAll = [];
+
+for nn = 1 : length(clusterStructure)
+    
+        thisClusterOriginalInds = clusterStructure(nn).thisClusterOriginalInds;
+        thisClusterOriginalIndsAll = [thisClusterOriginalIndsAll' thisClusterOriginalInds']';
+        
+    
+end
+
+% figure
+% for nn = 1 : length(clusterStructure)
+% 
+%             thisClusterOriginalInds = clusterStructure(nn).thisClusterOriginalInds;
+% clf 
+%         plot(boutDataPCASample(thisClusterOriginalIndsAll,1),boutDataPCASample(thisClusterOriginalIndsAll,2), '.k')
+%         hold on
+%         plot(boutDataPCASample(thisClusterOriginalInds,1),boutDataPCASample(thisClusterOriginalInds,2), '.r')
+% title(nn)
+%     
+%     pause
+% end
+
+
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%% exclude small clusters   %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+col = jet(length(clusterStructure));
+minNumbClusterPoints = 100;
+% clusterStructure = [];
+percClusterThres = 0.10;
+
+counter = 1;
+
+% figure
+for n = 1 : length(clusterStructure)
+n
+
+    thisClusterOriginalInds = clusterStructure(n).thisClusterOriginalInds;
+    indChoosenClusterCentersOrigianlInds = clusterStructure(n).indChoosenClusterCentersOrigianlInds;
+
+    indsCore = clusterStructure(n).indsCore;
+    bigDataSetNumber = clusterStructure(n).bigDataSetNumber;
+
+    %%
+    %%%%%%%%%%%%% Add escapes even if small %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %escapes
+
+%escapes + obends and good fast bouts
+% %       if n == 59 || n == 61 || n == 65 || n == 69 || n == 73 ||n == 79 || n == 92 || n == 96 || n == 102 || n == 110 || n == 113 || n == 116 || n == 118 || n == 121 || n == 126 || n == 131 || n == 133 || n == 137 || n == 139 || n == 142 || n == 144 || n == 147 || n == 150 || n == 152 || n == 155 || n == 158 || n == 161 || n == 166 || n == 171 || n == 173 || n == 180
+% 
+%           indPerm = randperm(length(indsCore));
+%     thisIndRand = indsCore(indPerm(1:length(indsCore)));
+%     
+% %      plot3(boutDataPCASample(thisIndRand,1),boutDataPCASample(thisIndRand,2),boutDataPCASample(thisIndRand,3), '.', 'color',col(n,:))
+%          plot3(boutDataPCASample(thisIndRand,1),boutDataPCASample(thisIndRand,2),boutDataPCASample(thisIndRand,3), '.', 'color','k')
+% %  plot(boutDataPCASample(thisIndRand,1),boutDataPCASample(thisIndRand,2), '.', 'color',col(n,:))
+% 
+%     hold on
+%     axis square
+% axis([-17 22 -10 20 -6 8])     
+% title(n)
+%         
+%         clusterStructure(n).BigCluster = 1;
+
+        
+        
+%     else
+    
+    %% 
+    %%%%%%%%%%% select big clusters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    if length(indsCore) > minNumbClusterPoints && percentageOfClustersAll(n) > percClusterThres 
+                
+        clusterStructure(n).BigCluster = 1;
+
+    else
+        
+        clusterStructure(n).BigCluster = 0;
+ 
+    end
+    
+    
+    %%force addo
+    clusterTadd = find(indToAddAllClusters == n);
+    clusterTexclude = find(indExcludeClusters == n);
+    
+    if ~isempty(clusterTadd)
+                clusterStructure(n).BigCluster = 1;
+
+    end
+
+    if ~isempty(clusterTexclude)
+                clusterStructure(n).BigCluster = 0;
+
+    end
+
+    
+    
+end
+
+%%%%%%%%%%%%% look at small clusters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+thisClusterOriginalIndsAll = [];
+
+for nn = 1 : length(clusterStructure)
+    
+        thisClusterOriginalInds = clusterStructure(nn).thisClusterOriginalInds;
+        thisClusterOriginalIndsAll = [thisClusterOriginalIndsAll' thisClusterOriginalInds']';
+        
+    
+end
+
+% figure
+bigClustersCount = zeros(1,length(clusterStructure));
+for nn = 1 : length(clusterStructure)
+
+    
+        BigCluster = clusterStructure(nn).BigCluster;
+        
+        if BigCluster == 1
+
+            thisClusterOriginalInds = clusterStructure(nn).thisClusterOriginalInds;
+%  clf 
+%         plot(boutDataPCASample(thisClusterOriginalIndsAll,1),boutDataPCASample(thisClusterOriginalIndsAll,2), '.k')
+%         hold on
+%         plot(boutDataPCASample(thisClusterOriginalInds,1),boutDataPCASample(thisClusterOriginalInds,2), '.r')
+% title(nn)
+%      pause
+         bigClustersCount(nn) = 1; 
+
+       end
+end
+
+indBigClusters = find(bigClustersCount == 1);
+sizeOfROCMatrix = length(indBigClusters);
+
+%%
+%%%%%%%%%%% look at choosen data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+figure
+indAllDataPoints = [];
+for n = 1 : length(bigClustersCount)
+   
+  %get inds of cluster 1
+   thisClusterOriginalInds = clusterStructure((n)).indsCore;  
+
+  if bigClustersCount(n) == 1
+  
+    subplot(1,2,1)
+  else
+      
+          subplot(1,2,2)
+
+  end
+  
+  
+    plot3(boutDataPCASample(thisClusterOriginalInds,1),boutDataPCASample(thisClusterOriginalInds,2),boutDataPCASample(thisClusterOriginalInds,3), '.', 'color','k')
+    hold on
+    indAllDataPoints = [indAllDataPoints' thisClusterOriginalInds']';
+    axis square
+    if bigClustersCount(n) == 1
+        
+       title('big clusters')
+
+    else
+        title('small clusters')
+
+    end
+    
+end
+
+
+disp('done')
+length(indBigClusters)
+pause

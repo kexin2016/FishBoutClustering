@@ -1,0 +1,168 @@
+
+clear all 
+close all
+
+%%
+%%%%%%%%%%%%%%% load bout map with raw data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+load('C:\Joao analysis\FreeData\clusteringData\boutMap\final\BoutMapWithRaw_AllDataWithLightTransitionsNoIndPrey_74Kins3dims_1.75Smooth_slow_100thres_tsne3_kNeighbor4.mat')
+
+%%
+%%%%%%%%%%%%%%%%% import bout map with raw data %%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+boutCat = BoutInfFinalArray(:, EnumeratorBoutInf.boutCat);
+
+
+uniqueBoutCat = unique(boutCatFinalArray);
+
+
+ for n  = 1 : length(uniqueBoutCat)
+%   n =1  
+    
+    indThisBoutType = find(boutCatFinalArray == uniqueBoutCat(n));
+    
+    
+    
+% end
+
+% subplot(2,6,n)
+figure
+
+%%
+%%%%%%%%%%%%%%%%%%%%% plot center bouts %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+col2 = jet(8);
+segmentNumber = 7;
+boutName = {'Approach swim','Slow 1','Slow 2','Burst swim','J turn','HAT','Routine turn','SAR',...
+    'O bend','LLE','C start'}
+% figure
+for i = 1 :10: 500%length(indThisBoutType)
+     cumsumInterpFixedSegmentAngles = FishDataMap(indBoutStartAllDataInFinalArray(indThisBoutType(i)):indBoutEndAllDataInFinalArray(indThisBoutType(i)),EnumeratorFishData.cumsumInterpFixedSegmentAngles)*180/pi;
+     beat1beatAmplitude8 = BoutKinematicParametersFinalArray(indThisBoutType(i),EnumeratorBoutKinPar.beat1beatAmplitude8);
+
+     
+    timeX = (1 : length(cumsumInterpFixedSegmentAngles)).*(1000/700);
+    
+%     subplot(3,4,i+1)
+%     figure
+    if beat1beatAmplitude8 > 0
+    
+%     for nnn = 1 : 7
+    plot(timeX,cumsumInterpFixedSegmentAngles(:,segmentNumber),'color','k','linewidth',1)
+    hold on
+%     end
+    
+    else
+%     for nnn = 1 : 7
+    plot(timeX,cumsumInterpFixedSegmentAngles(:,segmentNumber)*-1,'color','k','linewidth',1)
+    hold on
+%     end
+    end
+    
+    box off
+    axis([0 220 -130 250])
+    axis square
+    xlabel('Time (ms)')
+    
+    ylabel('End tail angle (°)')
+
+%     axis off
+%     title(boutName{i})
+%     
+end
+ end
+ 
+ %%
+ %%%%%% go through all the bout types and calcualte coeff of correlation %%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ pearsonCorr = zeros(length(boutCatFinalArray)-1,length(boutCatFinalArray)-1);
+ kendallCorr = zeros(length(boutCatFinalArray)-1,length(boutCatFinalArray)-1);
+ spearmanCorr = zeros(length(boutCatFinalArray)-1,length(boutCatFinalArray)-1);
+ MSEarray = zeros(length(boutCatFinalArray)-1,length(boutCatFinalArray)-1);
+ 
+ for n  = 1 : length(boutCatFinalArray)-1
+%   n =1  
+    n
+%     indThisBoutType1 = find(boutCatFinalArray == uniqueBoutCat(n));
+%             if indBoutStartAllDataInFinalArray((nn))+150 < length(FishDataMap)
+
+       cumsumInterpFixedSegmentAngles = FishDataMap(indBoutStartAllDataInFinalArray((n)):indBoutStartAllDataInFinalArray((n))+150,EnumeratorFishData.cumsumInterpFixedSegmentAngles)*180/pi;
+     beat1beatAmplitude8 = BoutKinematicParametersFinalArray((n),EnumeratorBoutKinPar.beat1beatAmplitude8);
+
+    if beat1beatAmplitude8 > 0
+    movementThis1 = cumsumInterpFixedSegmentAngles(:,segmentNumber);
+
+    
+    else
+%     for nnn = 1 : 7
+
+    movementThis1 = cumsumInterpFixedSegmentAngles(:,segmentNumber)*-1;
+   
+    end
+     
+    
+    
+     for nn  = 1 : length(boutCatFinalArray)-1
+    
+%         indThisBoutType2 = find(boutCatFinalArray == uniqueBoutCat(nn));
+%         if indBoutStartAllDataInFinalArray((nn))+150 < length(FishDataMap)
+            
+       cumsumInterpFixedSegmentAngles = FishDataMap(indBoutStartAllDataInFinalArray((nn)):indBoutStartAllDataInFinalArray((nn))+150,EnumeratorFishData.cumsumInterpFixedSegmentAngles)*180/pi;
+     beat1beatAmplitude8 = BoutKinematicParametersFinalArray((nn),EnumeratorBoutKinPar.beat1beatAmplitude8);
+
+    if beat1beatAmplitude8 > 0
+    movementThis2 = cumsumInterpFixedSegmentAngles(:,segmentNumber);
+
+    
+    else
+%     for nnn = 1 : 7
+
+    movementThis2 = cumsumInterpFixedSegmentAngles(:,segmentNumber)*-1;
+   
+    end
+     
+     
+         pearsonCorr(n,nn) = corr(movementThis1,movementThis2);
+         kendallCorr(n,nn) = corr(movementThis1,movementThis2,'type','Kendall');
+         spearmanCorr(n,nn) = corr(movementThis1,movementThis2,'type','Spearman');
+         
+         MSEarray(n,nn) = sum((movementThis1-movementThis2).*(movementThis1-movementThis2))/length(movementThis1);
+     end
+     
+%      end
+     
+           
+                
+%             end
+ end
+ 
+ 
+ 
+ %%
+ %%%%%%%%%%%%%%% order by bout type %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 
+[boutCatFinalArraySorted,idx] = sort(boutCatFinalArray(1:end-1));
+
+figure
+subplot(2,2,1)
+imagesc(abs(pearsonCorr(idx,idx)))
+axis square
+colormap gray
+
+subplot(2,2,2)
+imagesc(abs(kendallCorr(idx,idx)))
+axis square
+colormap gray
+
+subplot(2,2,3)
+imagesc(abs(spearmanCorr(idx,idx)))
+axis square
+colormap gray
+
+subplot(2,2,4)
+imagesc(abs(MSEarray(idx,idx)))
+axis square
+colormap gray

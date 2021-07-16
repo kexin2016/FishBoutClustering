@@ -1,0 +1,22 @@
+
+
+
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% make essemble t-SNE plot %%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+essembleMatrix = groupClusterSctructure.essembleMatrix;
+
+groupClusterSctructureThis = groupClusterSctructure.distributions;
+
+
+cutThreshold = 20;
+
+[T2,Z2,essembleMatrixPerm] = essemble_tSne_plot_1(essembleMatrix,boutDataPCASample,clusterStructure,groupClusterSctructureThis,cutThreshold);
+
+
+%%
+%%%%%%%%%%%%%%%%% make figure for thesis %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+imagesc(ROCareaNormDimProjtestNoNans)
