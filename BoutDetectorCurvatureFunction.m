@@ -26,14 +26,15 @@ function [allboutstarts,allboutends] = BoutDetectorCurvatureFunction(smoothedTai
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 maxData=max(smoothedTailCurvature);
 %
-[b,a] = butter(4,3/(fs*100/2),'high');
-smoothedTailCurvature = filtfilt(b,a,smoothedTailCurvature');
+% [b,a] = butter(4,3/(fs*100/2),'high');
+% smoothedTailCurvature = filtfilt(b,a,smoothedTailCurvature');
+% smoothedTailCurvature=smoothedTailCurvature';
 %%
 %%%%%%%%%%%%%%%%%%%%% define threshold %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 gm = fitgmdist(row2col(smoothedTailCurvature,1),2);
 [~,idx] = min(gm.ComponentProportion);
-threshold = max(0.12,gm.mu(idx)-gm.Sigma(idx)*2);
+threshold = max(0.05,gm.mu(idx)-gm.Sigma(idx)*2);
 % threshold based on percentile - works prey capture
 % threshold=max(prctile(smoothedTailCurvature,75),1.5);
 % threshold = prctile(smoothedTailCurvature,75);
@@ -50,7 +51,7 @@ threshold = max(0.12,gm.mu(idx)-gm.Sigma(idx)*2);
 %threshold on filtered movement for end of bout detection
 endThresh=0.025;
 
-allBouts=find(diff((smoothedTailCurvature>threshold)));
+allBouts=find(diff((abs(smoothedTailCurvature)>threshold)));
 allboutstarts_1=allBouts(1:2:end);
 allboutends_1=allBouts(2:2:end);
 allboutstarts_1 = allboutstarts_1(1:min(length(allboutstarts_1),length(allboutends_1)));
@@ -69,12 +70,15 @@ else
     allboutstarts = allboutstarts_1;
     allboutends = allboutends_1;
 end
+
+
+
 % %test starts and ends of bouts
-% startBout=smoothedTailCurvature(indThisStimTypeStart2:indThisStimTypeEnd2)*0;
+% % startBout=smoothedTailCurvature(indThisStimTypeStart2:indThisStimTypeEnd2)*0;
 % startBout(allboutstarts)=1;
-% endBout=smoothedTailCurvature(indThisStimTypeStart2:indThisStimTypeEnd2)*0;
+% % endBout=smoothedTailCurvature(indThisStimTypeStart2:indThisStimTypeEnd2)*0;
 % endBout(allboutends)=1;
-%
+% 
 % figure
 % plot(smoothedTailCurvature(indThisStimTypeStart2:indThisStimTypeEnd2), '.', 'color', 'black')
 % hold on
@@ -82,12 +86,13 @@ end
 % hold on
 % plot(endBout, 'o', 'color', 'red','LineWidth',2)
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%add bouts that are near%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%
 minimuminterboutinterval=400/fs/100;
-
+% minimuminterboutinterval=2;
 while (1==1)
     allinterboutlengths=allboutstarts(2:end)-allboutends(1:end-1);%calculate inter bout lengths
     if ~isempty(find(allinterboutlengths<minimuminterboutinterval, 1))%if there are bouts that are near
@@ -98,7 +103,7 @@ while (1==1)
         else
             allboutstarts=allboutstarts(1:shortinterval);
         end
-        if (shortinterval>1)
+        if (shortinterval>=1)
             allboutends=[row2col(allboutends(1:shortinterval-1),1);row2col(allboutends(shortinterval+1:end),1)];
         else
             allboutends=allboutends(2:end);
@@ -131,12 +136,14 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-minimumboutlength=0/(10/fs);
+minimumboutlength=2;
 
 newallboutstarts=allboutstarts(find((allboutends-allboutstarts)>minimumboutlength));
 newallboutends=allboutends(find((allboutends-allboutstarts)>minimumboutlength));
 allboutstarts=newallboutstarts;
 allboutends=newallboutends;
+
+
 
 % allboutstarts(allboutstarts>14)=allboutstarts(allboutstarts>14)-14;
 % allboutstarts(allboutstarts<15)=1;
@@ -162,7 +169,8 @@ allboutends=newallboutends;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if ~isempty(allboutstarts)%avoid cases when it does not pick any bout
-    minimummaxcurvature=max(0.2,gm.mu(idx)+gm.Sigma(idx)*2);
+%     minimummaxcurvature=max(0.05,gm.mu(idx)+gm.Sigma(idx)*2);
+    minimummaxcurvature=0.05;
     goodstarts=ones(size(allboutstarts));
     curvatureBlock=smoothedTailCurvature;
     for n=1:length(allboutstarts)
@@ -173,6 +181,9 @@ if ~isempty(allboutstarts)%avoid cases when it does not pick any bout
     allboutstarts=allboutstarts(find(goodstarts));
     allboutends=allboutends(find(goodstarts));
 end    
+
+
+
 %     
 %     % %test starts and ends of bouts
 %     % startBout=smoothedTailCurvature(indThisStimTypeStart2:indThisStimTypeEnd2)*0;
@@ -239,7 +250,7 @@ end
 % figure
 % %plot(cumFilteredSegmentAngle(indThisStimTypeStart2:indThisStimTypeEnd2))
 % hold on
-% plot(smoothedTailCurvature(indThisStimTypeStart2:indThisStimTypeEnd2),  'color', 'black')
+% plot(smoothedTailCurvature,  'color', 'black')
 % hold on
 % plot(startBout,  'color', 'green','LineWidth',2)
 % hold on

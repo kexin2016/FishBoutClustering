@@ -1,8 +1,8 @@
 function [boutFeature,del_sample_idx,del_feature_idx] = clean_boutKinematicParams(boutFeature)
 % boutFeature(:,end-3:end) = [];
-del_sample_idx = find(sum(isnan(boutFeature),2)>size(boutFeature,2)/5);
+del_sample_idx = find(sum(isnan(boutFeature),2)==size(boutFeature,2));
 boutFeature(del_sample_idx,:) = [];
-del_feature_idx = find(sum(isnan(boutFeature),1)>size(boutFeature,1)*0.1);
+del_feature_idx = find(sum(isnan(boutFeature),1)>size(boutFeature,1)*0.2);
 boutFeature(:,del_feature_idx) = [];
 disp(['remaining feature numbers: ' num2str(size(boutFeature,2))]);
 for i=1:size(boutFeature,2)

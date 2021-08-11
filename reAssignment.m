@@ -9,11 +9,11 @@ class_max_angle = arrayfun(@(i) abs(max_angle(cluster_watershed==i)),col2row(uni
 m_class_max_angle = cellfun(@(x) median(x),class_max_angle);
 r_class_max_angle = cellfun(@(x) quantile(x,0.75)-median(x),class_max_angle);
 [~,I_sum_angle] = sort(m_class_sum_angle,'descend');
-
-class_deltaAngle = arrayfun(@(i) abs(deltaAngle(cluster_watershed==i)),col2row(unique(cluster_watershed(~isnan(cluster_watershed))),1),'un',0);
-m_class_deltaAngle = cellfun(@(x) median(x),class_deltaAngle);
-class_deltaRadius = arrayfun(@(i) abs(deltaRadius(cluster_watershed==i)),col2row(unique(cluster_watershed(~isnan(cluster_watershed))),1),'un',0);
-m_class_deltaRadius = cellfun(@(x) median(x),class_deltaRadius);
+% 
+% class_deltaAngle = arrayfun(@(i) abs(deltaAngle(cluster_watershed==i)),col2row(unique(cluster_watershed(~isnan(cluster_watershed))),1),'un',0);
+% m_class_deltaAngle = cellfun(@(x) median(x),class_deltaAngle);
+% class_deltaRadius = arrayfun(@(i) abs(deltaRadius(cluster_watershed==i)),col2row(unique(cluster_watershed(~isnan(cluster_watershed))),1),'un',0);
+% m_class_deltaRadius = cellfun(@(x) median(x),class_deltaRadius);
 
 uniLabel = unique(cluster_watershed(~isnan(cluster_watershed)));
 comb = nchoosek(1:length(uniLabel),2);

@@ -20,7 +20,7 @@ function [boutDataPCASample,meanAllVar,stdAllVar,COEFF,SCORE,latent,maxKinPars] 
 %%
 
 %%
-indThisStim = 1:length(BoutKinematicParameters);
+indThisStim = 1:size(BoutKinematicParameters,1);
 BoutKinematicParametersGood =  BoutKinematicParameters(indThisStim,indKinPars);
 
 

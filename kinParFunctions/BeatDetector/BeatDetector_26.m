@@ -4,7 +4,7 @@
 
 
 
-function [cumsum2DInterpolatedAngles,cumsumInterpolatedAnglesGray,indRealBoutStart,indRealBoutEnd,halfBeatStructure,numbBeats,halfBeatPosInt,halfBeatMag] = BeatDetector_24Mike5(cumsumInterpolatedAngles,lastMeasuredSegment,makeplot,fps)
+function [cumsum2DInterpolatedAngles,cumsumInterpolatedAnglesGray,indRealBoutStart,indRealBoutEnd,halfBeatStructure,numbBeats,halfBeatPosInt,halfBeatMag] = BeatDetector_26(cumsumInterpolatedAngles,lastMeasuredSegment,makeplot,fps)
 
 if makeplot == 1
 %     clf
@@ -63,7 +63,7 @@ cumsumInterpolatedAnglesGray = mat2gray(cumsum2DInterpolatedAngles);
 % subplot(1,2,1)
 % imagesc(cumsum2DInterpolatedAngles)
 % colormap gray
-%
+% 
 % subplot(1,2,2)
 % imagesc(cumsumInterpolatedAnglesGray)
 % colormap gray
@@ -129,7 +129,7 @@ if size(cumsumInterpolatedAnglesGray,1) > smoothingThres%exclude very small bout
         if isempty(indBinaryPos) || isempty(indBinaryNeg)%threshold detects nothing
             
             %!!! don't know what ot put here; maybe nothing?
-            
+            disp('threshold detects nothing');
             
         else%threshold detects something
             

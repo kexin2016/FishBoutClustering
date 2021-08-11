@@ -1,7 +1,7 @@
 %% 1.prepare data
 % assuming we already have several datasets (key_dataset) for training
 %config 
-new_name = 'freeMovingFishBoutKine_v14';
+new_name = 'freeMovingFishBoutKine_v15';
 key_dataset = {'202012171120','202012230849','202101060921','202012231022','202101051417',...
     '202012230816','202101051502','202101061048'};% 12dpf, 10dpf, 10dpf
 boutKine = cell(length(key_dataset),1);
@@ -39,11 +39,11 @@ meanPCASpace = mean(SCORE,1);
 numPC = 70;
 opts = struct('initialization',boutDataPCASample(:,1:numPC));
 Y = fast_tsne(boutDataPCASample(:,1:numPC),opts);
-%J turn enhancement
-newIndex = lookup_labeled_J_turn(whichFish_labeled_j_turn,whichBout_labeled_j_turn,whichFish,whichBout);
-Y = [Y;repmat(Y(newIndex),1,1)];
+% %J turn enhancement
+% newIndex = lookup_labeled_J_turn(whichFish_labeled_j_turn,whichBout_labeled_j_turn,whichFish,whichBout);
+% Y = [Y;repmat(Y(newIndex),1,1)];
 
-[cluster_watershed,pdf,I,clusterC,nC,color,symbol,x,y] = watershed_segment(Y,4.0);
+[cluster_watershed,pdf,I,clusterC,nC,color,symbol,x,y] = watershed_segment(Y,3.0);
 o_cluster_watershed = cluster_watershed;
 %% 4.refine clustering
 %%%4.1 delete abnormal clusters

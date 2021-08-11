@@ -49,6 +49,9 @@ parfor iBout = 1 : length(allboutstarts)
     if mod(iBout,1000)==0
         disp(['processing ' num2str(iBout) ' bout...']);
     end
+    if(length(allboutstarts)<1000)
+        disp(['processing ' num2str(iBout) ' bout...']);
+    end
     cumsumAngleByBout = cumsumInterpFixedSegmentAngles(allboutstarts(iBout) : allboutends(iBout),1:lastMeasuredSegment);
 %     size(cumsumAngleByBout)
     %inperpolate tail angle
@@ -83,6 +86,7 @@ parfor iBout = 1 : length(allboutstarts)
 %     size(cumsumInterpolatedAngleByBout)
     %% beat detector
     if length(cumsumInterpolatedAngleByBout)<130%some bout is too short to use filtfilt because filtfilt has an implicit requirement that samples number must be three times longer than filter order
+        disp('bout is too short to use filtfilt');
         BoutKinematicParameters(iBout,:) =nan(1,179);
         continue;
     end
@@ -90,10 +94,12 @@ parfor iBout = 1 : length(allboutstarts)
         = BeatDetector_26(cumsumInterpolatedAngleByBout,lastMeasuredSegment,makeplot,fps);
     if isnumeric(halfBeatStructure)&&isnan(halfBeatStructure)
         BoutKinematicParameters(iBout,:) =nan(1,179);
+        disp('can not detect beats');
         continue;
     end
-    if halfBeatStructure(1).indBeatStart<30 || length(halfBeatStructure)>11
+    if halfBeatStructure(1).indBeatStart<0 || length(halfBeatStructure)>100
         BoutKinematicParameters(iBout,:) =nan(1,179);
+        disp('can not detect beats');
         continue;
     end
     
@@ -196,6 +202,9 @@ parfor iBout = 1 : length(allboutstarts)
     %211-124(beatDistance&speed)
     %     [BoutKinematicParametersThisBout] = BoutParametersCalculatorMaxAngularSpeed_1(BoutKinematicParametersThisBout,...
     %         BeatKinematicParametersThisBout,realBodyAnglesLessSmoothThis);
+    if(isnan(BoutKinematicParametersThisBout))
+        disp('all boutKine is NAN')
+    end
     BoutKinematicParameters(iBout,:) = col2row(BoutKinematicParametersThisBout,1);
     
     %     [BoutInfThisBout] = boutInfMaker_21(iBout,xPos,yPos,dataSetNumber,protocolNumber,fishUniqueNumber,thisBoutStim, boutPreviousStim,pixelSize,headToBladderLength,tailSegmentLength,...
@@ -208,6 +217,10 @@ parfor iBout = 1 : length(allboutstarts)
     %update bout number
     boutUniqueNumber = boutUniqueNumber + 1;
 end
+
+
+
+
 %% test mode
 elseif strcmpi(mode,'test')
     for iBout = 1 : length(allboutstarts)
@@ -216,19 +229,15 @@ elseif strcmpi(mode,'test')
 %     size(cumsumAngleByBout)
     %inperpolate tail angle
     %create x - frames in real data
-    x = 1:1:length(cumsumAngleByBout);
+    x = 1:1:size(cumsumAngleByBout,1);
     
     %create xi - parts of frames to interpolate
-    xi = 1:0.1:length(cumsumAngleByBout);
+    xi = 1:0.1:size(cumsumAngleByBout,1);
     
     %interpolate tail data
     cumsumInterpolatedAngleByBout = zeros(length(xi), size(cumsumAngleByBout,2));
     for f = 1:size(cumsumAngleByBout,2)
-        
-        
         cumsumInterpolatedAngleByBout(:,f) = interp1(x,cumsumAngleByBout(:,f),xi, '*spline')';
-        
-        
     end
     %interpolate bodyAngle data
     interpBodyAngles = nan(length(xi),1);% in rads
@@ -250,7 +259,7 @@ elseif strcmpi(mode,'test')
         BoutKinematicParameters(iBout,:) =nan(1,179);
         continue;
     end
-    if halfBeatStructure(1).indBeatStart<30
+    if halfBeatStructure(1).indBeatStart<0
         BoutKinematicParameters(iBout,:) =nan(1,179);
         continue;
     end

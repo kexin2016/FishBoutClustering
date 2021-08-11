@@ -15,16 +15,27 @@ figure,ksdensity(Y,[x(:) y(:)],'Bandwidth',density_index);
 % lm= fit([5 9 17 27]',N([5 9 17 27])','exp1');
 % baseline = lm.a*exp(lm.b*[1:90]);
 pdf = reshape(pdf,length(yy),length(xx));
+figure,imagesc(pdf)
+% pdf to gray
+gray=pdf*100000;
 % pdf = pdf./col2row(baseline,1);
 % figure,imagesc(pdf);
 bw = imbinarize(pdf,'adaptive');
+figure,imshow(bw);
 % bw = imbinarize(pdf,2e-04);
 % thresh=adaptthresh(pdf,0.5,'statistic','mean','NeighborhoodSize',[9 9],'ForegroundPolarity','bright');
 % thresh=adaptthresh(pdf,0.5,'statistic','mean','NeighborhoodSize',[11 11],'ForegroundPolarity','bright');
 % bw=imbinarize(pdf,thresh);
-bw=~bw;
-d=bwdist(bw);
-I=watershed(-d);
+
+
+
+
+% bw=~bw;
+% d=bwdist(bw);
+I=watershed(gray);
+
+% I=bwlabel(bw);
+
 w=I==0;
 g=bw&~w|(pdf==0);
 I(pdf<5e-05) = 0;
@@ -40,7 +51,7 @@ cluster_watershed = nan(size(Y,1),1);
 for iRow = 1:length(xx)
     for iCol = 1:length(yy)
         tmpIdx = Y(:,1)>=(xx(iRow)-1)&Y(:,1)<(xx(iRow)+1)&Y(:,2)>=(yy(iCol)-1)&Y(:,2)<(yy(iCol)+1);
-%         disp(['x:' num2str(xx(iRow)) ' y:' num2str(yy(iCol)) ' sample number:' num2str(nnz(tmpIdx))]);
+        disp(['x:' num2str(xx(iRow)) ' y:' num2str(yy(iCol)) ' sample number:' num2str(nnz(tmpIdx))]);
         cluster_watershed(tmpIdx)=nI(iRow,iCol);
     end
 end
