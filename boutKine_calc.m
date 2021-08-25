@@ -52,6 +52,8 @@ parfor iBout = 1 : length(allboutstarts)
     if(length(allboutstarts)<1000)
         disp(['processing ' num2str(iBout) ' bout...']);
     end
+    
+    try
     cumsumAngleByBout = cumsumInterpFixedSegmentAngles(allboutstarts(iBout) : allboutends(iBout),1:lastMeasuredSegment);
 %     size(cumsumAngleByBout)
     %inperpolate tail angle
@@ -216,6 +218,9 @@ parfor iBout = 1 : length(allboutstarts)
     
     %update bout number
     boutUniqueNumber = boutUniqueNumber + 1;
+    catch ME
+        disp(ME.message)
+    end
 end
 
 

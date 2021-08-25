@@ -26,15 +26,15 @@ function [allboutstarts,allboutends] = BoutDetectorCurvatureFunction(smoothedTai
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 maxData=max(smoothedTailCurvature);
 %
-% [b,a] = butter(4,3/(fs*100/2),'high');
-% smoothedTailCurvature = filtfilt(b,a,smoothedTailCurvature');
-% smoothedTailCurvature=smoothedTailCurvature';
+[b,a] = butter(4,3/(fs*100/2),'high');
+smoothedTailCurvature = filtfilt(b,a,smoothedTailCurvature');
+smoothedTailCurvature=smoothedTailCurvature';
 %%
 %%%%%%%%%%%%%%%%%%%%% define threshold %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 gm = fitgmdist(row2col(smoothedTailCurvature,1),2);
 [~,idx] = min(gm.ComponentProportion);
-threshold = max(0.05,gm.mu(idx)-gm.Sigma(idx)*2);
+threshold = max(0.1,gm.mu(idx)-gm.Sigma(idx)*2);
 % threshold based on percentile - works prey capture
 % threshold=max(prctile(smoothedTailCurvature,75),1.5);
 % threshold = prctile(smoothedTailCurvature,75);
@@ -91,7 +91,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%
-minimuminterboutinterval=400/fs/100;
+minimuminterboutinterval=50;
 % minimuminterboutinterval=2;
 while (1==1)
     allinterboutlengths=allboutstarts(2:end)-allboutends(1:end-1);%calculate inter bout lengths
@@ -136,7 +136,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-minimumboutlength=2;
+minimumboutlength=10;
 
 newallboutstarts=allboutstarts(find((allboutends-allboutstarts)>minimumboutlength));
 newallboutends=allboutends(find((allboutends-allboutstarts)>minimumboutlength));
@@ -169,8 +169,8 @@ allboutends=newallboutends;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if ~isempty(allboutstarts)%avoid cases when it does not pick any bout
-%     minimummaxcurvature=max(0.05,gm.mu(idx)+gm.Sigma(idx)*2);
-    minimummaxcurvature=0.05;
+    minimummaxcurvature=max(0.1,gm.mu(idx)+gm.Sigma(idx)*2);
+%     minimummaxcurvature=0.05;
     goodstarts=ones(size(allboutstarts));
     curvatureBlock=smoothedTailCurvature;
     for n=1:length(allboutstarts)

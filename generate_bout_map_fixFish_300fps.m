@@ -1,52 +1,26 @@
 %% 1.prepare data
 % assuming we already have several datasets (key_dataset) for training
 %config 
-new_name = 'fixFish210106';
-key_dataset = {'210106fish1'};
+new_name = 'fixFish210813';
+key_dataset = {'210813fish1'};
 boutKine = cell(length(key_dataset),1);
 eyeConv = cell(length(key_dataset),1);
 whichFish = cell(length(key_dataset),1);
 whichBout= cell(length(key_dataset),1);
-angle = cell(length(key_dataset),1);
-radius = cell(length(key_dataset),1);
 age = cell(length(key_dataset),1);
+
 species = cell(length(key_dataset),1);
 exptype = cell(length(key_dataset),1);
 for idata = 1:length(key_dataset)
-    [boutKine{idata},eyeConv{idata},whichFish{idata},whichBout{idata},radius{idata},angle{idata},age{idata},species{idata},exptype{idata}]...
+    [boutKine{idata},eyeConv{idata},whichFish{idata},whichBout{idata},age{idata},species{idata},exptype{idata}]...
         = getPrepData(resolveFilepath(key_dataset{idata},'F:\Kexin\zebrafish_hunting\data\analysis_result\'),key_dataset{idata});
 end
-[boutKine,eyeConv,whichFish,whichBout,radius,angle,age,species,exptype] = samfnmultvar(@(x) cat(1,x{:}),boutKine,eyeConv,whichFish,whichBout,radius,angle,age,species,exptype);
-
-%% 1.1 通过手工标签检测bout分类准确性
-load('F:\Kexin\zebrafish_hunting\data\analysis_result\210106_fish1_h2bg6f_9dpf\tailMovementByHand.mat');
-load('F:\Kexin\zebrafish_hunting\data\analysis_result\210106_fish1_h2bg6f_9dpf\tail_swing.mat');
-load('F:\Kexin\zebrafish_hunting\data\analysis_result\210106_fish1_h2bg6f_9dpf\high_analysis.mat');
-angle_data = angle_data - median(angle_data,2);
-angle_data = angle_data - angle_data(:,1);
-%     angle_data = angle_data(:,11:20);
-angle_data = angle_data(:,11:20);% which segment to select for further kinematic feature extraction
-angle_data = remove_average(30,angle_data);
-allBouts=find(diff(bigwave));
-allboutstarts_1=allBouts(1:2:end);
-allboutends_1=allBouts(2:2:end);
-boutStartByHand = allboutstarts_1(1:min(length(allboutstarts_1),length(allboutends_1)));
-boutEndByHand = allboutends_1(1:min(length(allboutstarts_1),length(allboutends_1)));
-boutIdxHand=[boutStartByHand boutEndByHand];
-nBout = size(boutIdxHand,1);
-boutKineHand=arrayfun(@(i) -angle_data(boutIdxHand(i,1)-3:boutIdxHand(i,2)+3,:),1:nBout,'un',0);
-boutKineHand = row2col(boutKineHand,1);
-boutHandIdx=zeros(length(boutKine)+length(boutIdxHand),1);
-boutHandIdx(end-length(boutIdxHand):end)=1;
-boutKine=[boutKine;boutKineHand];
-converge_angle=converge_angle(1:46941);
-eyeConvHand=arrayfun(@(i) deg2rad(converge_angle(boutIdxHand(i,1)-3:boutIdxHand(i,2)+3)),1:nBout,'un',0);
-eyeConv=[eyeConv;eyeConvHand'];
+[boutKine,eyeConv,whichFish,whichBout,age,species,exptype] = samfnmultvar(@(x) cat(1,x{:}),boutKine,eyeConv,whichFish,whichBout,age,species,exptype);
 
 
 %% 2.generate kinematic feature
-boutKinematicParams_pos = boutKine_calc(boutKine,eyeConv,0.5,10,'batch');
-boutKinematicParams_neg = boutKine_calc(cellfun(@(x) -x,boutKine,'un',0),eyeConv,0.5,10,'batch');
+boutKinematicParams_pos = boutKine_calc(boutKine,eyeConv,3,10,'batch');
+boutKinematicParams_neg = boutKine_calc(cellfun(@(x) -x,boutKine,'un',0),eyeConv,3,10,'batch');
 boutKinematicParams = nan(size(boutKinematicParams_pos));
 % boutKine全部为nan  这一步没有赋值 导致后面删除了这个bout
 % 0和1代表什么？？？第48列代表什么？？
@@ -56,11 +30,11 @@ boutKinematicParams(boutKinematicParams_pos(:,48)==1&boutKinematicParams_neg(:,4
 % newfeature = extractFrequencyDomainFeature(boutKine);
 % boutKinematicParams = [boutKinematicParams newfeature];
 
-boutKinematicParams=boutKinematicParams_pos;
+% boutKinematicParams=boutKinematicParams_pos;
 
 %% 3.preliminary clustering
 [BoutKinematicParametersGood,del_idx,del_feature_idx] = clean_boutKinematicParams(boutKinematicParams);
-[whichFish,whichBout,boutKine,eyeConv,boutKinematicParams,angle,radius,boutHandIdx] = samfnmultvar(@(x) x(setdiff(1:length(x),del_idx),:),whichFish,whichBout,boutKine,eyeConv,boutKinematicParams,angle,radius,boutHandIdx);
+[whichFish,whichBout,boutKine,eyeConv,boutKinematicParams,angle,radius] = samfnmultvar(@(x) x(setdiff(1:size(x,1),del_idx),:),whichFish,whichBout,boutKine,eyeConv,boutKinematicParams,angle,radius);
 
 makeplot = 1;
 indKinPars = 1:size(BoutKinematicParametersGood,2);
@@ -76,14 +50,14 @@ o_cluster_watershed = cluster_watershed;
 
 %% 3.4 check bout plot
 %     check bout
-boutDetCheck=zeros(length(smoothedTailCurvature),1);
+boutDetCheck=zeros(length(sum(tailAngle,2)),1);
 for i=1:length(whichBout)
     boutDetCheck(whichBout(i,1):whichBout(i,2))=1;
 end
 figure
-plot(smoothedTailCurvature);
+plot(sum(tailAngle,2));
 hold on
-plot(smoothedTailCurvature.*boutDetCheck)
+plot(sum(tailAngle,2).*boutDetCheck)
 
 %% 3.5  check bouts video
 videoPath='F:\Kexin\zebrafish_hunting\data\analysis_result\210106_fish1_h2bg6f_9dpf\20210106_fish1_h2bg6f_9dpf_low_all.avi';
