@@ -1,3 +1,6 @@
+for 300fps low fish video
+
+
 1.generate basic data: including bout detection, angle data, angle, radius, eyeConvergence of each bout, etc.
 2.generate bout kinematic parameters whose name is at getEnumeratorBoutKinematicParams.m
 3.generate frequency domain feature
